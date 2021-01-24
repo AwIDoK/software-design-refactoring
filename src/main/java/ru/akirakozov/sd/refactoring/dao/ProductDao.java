@@ -24,4 +24,68 @@ public class ProductDao {
             throw new RuntimeException(e);
         }
     }
+
+    public static List<Product> getProducts() {
+        return runProductListQuery("SELECT * FROM PRODUCT");
+    }
+
+    public static List<Product> getMaxPriceProduct() {
+        return runProductListQuery("SELECT * FROM PRODUCT ORDER BY PRICE DESC LIMIT 1");
+    }
+
+    public static List<Product> getMinPriceProduct() {
+        return runProductListQuery("SELECT * FROM PRODUCT ORDER BY PRICE LIMIT 1");
+    }
+
+    public static long getProductCount() {
+        return runNumberQuery("SELECT COUNT(*) FROM PRODUCT");
+    }
+
+    public static long getSummaryPrice() {
+        return runNumberQuery("SELECT SUM(PRICE) FROM PRODUCT");
+    }
+
+    private static <T> T runSqlQuery(String sql, Function<ResultSet, T> resultGetter) {
+        T result;
+        try {
+            try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
+                try (Statement stmt = c.createStatement()) {
+                    try (ResultSet rs = stmt.executeQuery(sql)) {
+                        result = resultGetter.apply(rs);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    private static List<Product> runProductListQuery(String sql) {
+        return runSqlQuery(sql, rs -> {
+            List<Product> result = new ArrayList<>();
+            try {
+                while (rs.next()) {
+                    result.add(new Product(rs.getString("name"), rs.getInt("price")));
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        });
+    }
+
+    private static long runNumberQuery(String sql) {
+        return runSqlQuery(sql, rs -> {
+            long result = 0;
+            try {
+                if (rs.next()) {
+                    result = rs.getLong(1);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        });
+    }
 }
