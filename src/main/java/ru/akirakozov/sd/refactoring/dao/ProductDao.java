@@ -10,6 +10,20 @@ import java.util.function.Function;
 public class ProductDao {
     final private static String DATABASE = "jdbc:sqlite:test.db";
 
+    public static void ensureTableExists() {
+        try (Connection c = DriverManager.getConnection(DATABASE)) {
+            String sql = "CREATE TABLE IF NOT EXISTS PRODUCT" +
+                    "(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+                    " NAME           TEXT    NOT NULL, " +
+                    " PRICE          INT     NOT NULL)";
+            try(Statement stmt = c.createStatement()) {
+                stmt.executeUpdate(sql);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void addProduct(Product product) {
         try {
             try (Connection c = DriverManager.getConnection(DATABASE)) {
